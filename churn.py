@@ -5,7 +5,7 @@ import os
 import gdown
 
 # Google Drive model file ID (update this!)
-MODEL_ID = 'YOUR_MODEL_FILE_ID'
+MODEL_ID = '1EXqTXVLADlqyPbXkwrTix3yN3vm6_89X'
 
 # Download churn_model.pkl from Google Drive if not already present
 model_path = 'churn_model.pkl'

@@ -4,49 +4,49 @@ import joblib
 import os
 import gdown
 
-# ✅ Google Drive File ID for your churn_model.pkl
-MODEL_ID = '1EXqTXVLADlqyPbXkwrTix3yN3vm6_89X'  # ← REPLACE THIS
+# 🔹 Google Drive Model ID
+MODEL_ID = '1VuXdBmWgu2QjLIWPuIFJ0BNCQS9TO0BY'
 model_url = f'https://drive.google.com/uc?id={MODEL_ID}'
 model_path = 'churn_model.pkl'
 
-# ✅ Download the model if not already present
+# 🔽 Download model if not already downloaded
 if not os.path.exists(model_path):
     gdown.download(model_url, model_path, quiet=False)
 
-# ✅ Load the model and scaler
+# 🔹 Load model and scaler
 model = joblib.load(model_path)
-scaler = joblib.load('scaler.pkl')  # This should be in your GitHub repo
+scaler = joblib.load("scaler.pkl")  # scaler.pkl should be present in the GitHub repo
 
-# ✅ Streamlit UI
+# 🖼️ UI setup
 st.set_page_config(page_title="Student Churn Predictor", layout="centered")
 st.title("🎓 Student Churn Predictor")
-st.markdown("Predict whether a student is likely to churn based on academic and behavioral data.")
+st.markdown("Use academic and behavioral features to predict if a student is likely to churn.")
 
-# 🔘 Input form
-with st.form("churn_form"):
+# 🧾 Input form
+with st.form("input_form"):
+    gender = st.selectbox("Gender", ["Female", "Male", "Other"])
+    income = st.selectbox("Family Income", ["Low", "Mid", "High", "Unknown"])
+    discipline = st.slider("Discipline Score (1–5)", 1, 5, 3)
+    hw_score = st.slider("Homework Score (1–5)", 1, 5, 3)
+
     attendance = st.slider("Class Attendance (%)", 0, 100, 75)
-    percentage = st.slider("Test Percentage (%)", 0, 100, 65)
-    homework_score = st.slider("Homework Score (1–5)", 1, 5, 3)
-    tenth_percentage = st.slider("10th Board Percentage (%)", 0, 100, 70)
-
-    income = st.selectbox("Family Income", ['Low', 'Mid', 'High'])
-    gender = st.selectbox("Gender", ['Male', 'Female'])
-    rating = st.selectbox("Student Rating", ['Poor', 'Average', 'Good', 'Very Good', 'Excellent'])
+    test_avg = st.slider("Test Average Score (%)", 0, 100, 60)
+    rating = st.slider("Student Rating (1–10)", 1, 10, 7)
+    tenth = st.slider("10th Percentage", 0, 100, 70)
 
     submitted = st.form_submit_button("Predict Churn")
 
-# 🔠 Mappings
-income_map = {'Low': 0, 'Mid': 1, 'High': 2}
-gender_map = {'Male': 0, 'Female': 1}
-rating_map = {'Poor': 0, 'Average': 1, 'Good': 2, 'Very Good': 3, 'Excellent': 4}
+# 🔠 Encoders
+gender_map = {"Female": 0, "Male": 1, "Other": 2}
+income_map = {"Low": 0, "Mid": 1, "High": 2, "Unknown": -1}
 
-# 🔮 Prediction
+# 🧮 Prediction
 if submitted:
-    numeric_features = np.array([[attendance, percentage, homework_score, tenth_percentage]])
-    categorical_features = np.array([[income_map[income], gender_map[gender], rating_map[rating]]])
+    cat_feats = np.array([[gender_map[gender], income_map[income], discipline, hw_score]])
+    num_feats = np.array([[attendance, test_avg, rating, tenth]])
+    num_scaled = scaler.transform(num_feats)
 
-    numeric_scaled = scaler.transform(numeric_features)
-    input_features = np.hstack((numeric_scaled, categorical_features))  # shape = (1, 7)
+    input_features = np.hstack((cat_feats, num_scaled))  # final shape (1, 8)
 
     prediction = model.predict(input_features)[0]
     prob = model.predict_proba(input_features)[0][1]
@@ -56,10 +56,9 @@ if submitted:
     else:
         st.success(f"✅ Likely to Stay — Churn Probability: {prob:.2%}")
 
-    st.markdown("### 💡 Top 3 Features Driving Prediction")
+    st.markdown("### 💡 Top Influential Factors")
     st.markdown("""
-    1. **Attendance** – Lower class attendance often signals disengagement  
-    2. **Homework Score** – Inconsistent homework effort is tied to higher churn risk  
-    3. **Student Rating** – Self-assessed low satisfaction tends to align with churn
+    1. **Attendance** — Poor attendance strongly linked with churn  
+    2. **Homework & Discipline** — Less effort = higher risk  
+    3. **Student Rating** — Lower satisfaction = more likely to churn
     """)
-    st.caption("Based on feature importance from the Random Forest model.")

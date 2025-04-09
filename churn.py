@@ -5,7 +5,7 @@ import os
 import gdown
 
 # 🔹 Google Drive Model ID
-MODEL_ID = '1VuXdBmWgu2QjLIWPuIFJ0BNCQS9TO0BY'
+MODEL_ID = '1cQxDwCBZqp_4E1dtjdYZ3Vo8LUUohHkD'
 model_url = f'https://drive.google.com/uc?id={MODEL_ID}'
 model_path = 'churn_model.pkl'
 

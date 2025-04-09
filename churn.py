@@ -4,26 +4,25 @@ import joblib
 import os
 import gdown
 
-# Google Drive model file ID (update this!)
-MODEL_ID = '1EXqTXVLADlqyPbXkwrTix3yN3vm6_89X'
-
-# Download churn_model.pkl from Google Drive if not already present
+# ✅ Google Drive File ID for your churn_model.pkl
+MODEL_ID = '1EXqTXVLADlqyPbXkwrTix3yN3vm6_89X'  # ← REPLACE THIS
+model_url = f'https://drive.google.com/uc?id={MODEL_ID}'
 model_path = 'churn_model.pkl'
+
+# ✅ Download the model if not already present
 if not os.path.exists(model_path):
-    gdown.download(f'https://drive.google.com/uc?id={MODEL_ID}', model_path, quiet=False)
+    gdown.download(model_url, model_path, quiet=False)
 
-# Load model from downloaded file
+# ✅ Load the model and scaler
 model = joblib.load(model_path)
+scaler = joblib.load('scaler.pkl')  # This should be in your GitHub repo
 
-# Load scaler from local file (from GitHub)
-scaler = joblib.load('scaler.pkl')
-
-# Streamlit UI
+# ✅ Streamlit UI
 st.set_page_config(page_title="Student Churn Predictor", layout="centered")
 st.title("🎓 Student Churn Predictor")
 st.markdown("Predict whether a student is likely to churn based on academic and behavioral data.")
 
-# Input form
+# 🔘 Input form
 with st.form("churn_form"):
     attendance = st.slider("Class Attendance (%)", 0, 100, 75)
     percentage = st.slider("Test Percentage (%)", 0, 100, 65)
@@ -36,25 +35,21 @@ with st.form("churn_form"):
 
     submitted = st.form_submit_button("Predict Churn")
 
-# Mappings
+# 🔠 Mappings
 income_map = {'Low': 0, 'Mid': 1, 'High': 2}
 gender_map = {'Male': 0, 'Female': 1}
 rating_map = {'Poor': 0, 'Average': 1, 'Good': 2, 'Very Good': 3, 'Excellent': 4}
 
+# 🔮 Prediction
 if submitted:
-    # Prepare input
-    numerical = np.array([[attendance, percentage, homework_score, tenth_percentage]])
-    categorical = np.array([[income_map[income], gender_map[gender], rating_map[rating]]])
+    numeric_features = np.array([[attendance, percentage, homework_score, tenth_percentage]])
+    categorical_features = np.array([[income_map[income], gender_map[gender], rating_map[rating]]])
 
-    # Scale numerical part
-    numerical_scaled = scaler.transform(numerical)
+    numeric_scaled = scaler.transform(numeric_features)
+    input_features = np.hstack((numeric_scaled, categorical_features))  # shape = (1, 7)
 
-    # Combine both
-    input_scaled = np.hstack((numerical_scaled, categorical))
-
-    # Predict
-    prediction = model.predict(input_scaled)[0]
-    prob = model.predict_proba(input_scaled)[0][1]
+    prediction = model.predict(input_features)[0]
+    prob = model.predict_proba(input_features)[0][1]
 
     if prediction == 1:
         st.error(f"⚠️ High Risk of Churn — Probability: {prob:.2%}")
